@@ -1,0 +1,1440 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MPSI Planner — Organisateur Intelligent</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --surface2: #1a1a24;
+    --border: #2a2a38;
+    --accent: #6c63ff;
+    --accent2: #ff6584;
+    --accent3: #43e97b;
+    --accent4: #f7971e;
+    --text: #e8e8f0;
+    --muted: #6b6b80;
+    --math: #6c63ff;
+    --physique: #43e97b;
+    --chimie: #f7971e;
+    --info: #38b2f7;
+    --francais: #ff6584;
+    --anglais: #f7c948;
+    --si: #a78bfa;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* GRID BACKGROUND */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: 
+      linear-gradient(var(--border) 1px, transparent 1px),
+      linear-gradient(90deg, var(--border) 1px, transparent 1px);
+    background-size: 40px 40px;
+    opacity: 0.3;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .app {
+    position: relative;
+    z-index: 1;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 24px 20px;
+  }
+
+  /* HEADER */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 40px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .logo-icon {
+    width: 44px; height: 44px;
+    background: var(--accent);
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 18px;
+    color: white;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .logo-icon::after {
+    content: '';
+    position: absolute;
+    top: -10px; right: -10px;
+    width: 30px; height: 30px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 50%;
+  }
+
+  .logo-text h1 {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 20px;
+    letter-spacing: -0.5px;
+    color: var(--text);
+  }
+
+  .logo-text p {
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+  }
+
+  .header-stats {
+    display: flex;
+    gap: 16px;
+  }
+
+  .stat-pill {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 14px;
+    text-align: center;
+  }
+
+  .stat-pill .val {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 18px;
+    color: var(--accent);
+    display: block;
+  }
+
+  .stat-pill .lbl {
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  /* TABS */
+  .tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 28px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 4px;
+  }
+
+  .tab {
+    flex: 1;
+    padding: 10px 16px;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all 0.2s;
+    text-transform: uppercase;
+  }
+
+  .tab.active {
+    background: var(--accent);
+    color: white;
+  }
+
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* SECTION TITLES */
+  .section-title {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* TASK INPUT */
+  .input-grid {
+    display: grid;
+    grid-template-columns: 1fr 140px 120px 100px auto;
+    gap: 10px;
+    margin-bottom: 10px;
+    align-items: end;
+  }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .field label {
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  input, select, textarea {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    padding: 10px 12px;
+    outline: none;
+    transition: border-color 0.2s;
+    width: 100%;
+  }
+
+  input:focus, select:focus, textarea:focus {
+    border-color: var(--accent);
+  }
+
+  select option { background: var(--surface2); }
+
+  .btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+    text-transform: uppercase;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: white;
+  }
+
+  .btn-primary:hover { background: #5a52e0; transform: translateY(-1px); }
+
+  .btn-danger {
+    background: transparent;
+    border: 1px solid #ff4757;
+    color: #ff4757;
+    padding: 6px 10px;
+    font-size: 11px;
+  }
+
+  .btn-danger:hover { background: #ff4757; color: white; }
+
+  .btn-generate {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: white;
+    padding: 14px 28px;
+    font-size: 13px;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    border-radius: 10px;
+    width: 100%;
+    letter-spacing: 0.05em;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn-generate::before {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%;
+    width: 100%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+    transition: left 0.4s;
+  }
+
+  .btn-generate:hover::before { left: 100%; }
+  .btn-generate:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(108,99,255,0.3); }
+
+  /* TASK LIST */
+  .tasks-container {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+
+  .task-row {
+    display: grid;
+    grid-template-columns: auto 1fr 120px 80px 80px 60px;
+    gap: 12px;
+    align-items: center;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+    animation: fadeIn 0.3s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .task-row:last-child { border-bottom: none; }
+  .task-row:hover { background: var(--surface2); }
+
+  .task-row.done .task-name { text-decoration: line-through; opacity: 0.4; }
+
+  .matiere-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.03em;
+  }
+
+  .priority-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .p-haute { background: #ff4757; }
+  .p-moyenne { background: #f7971e; }
+  .p-basse { background: #43e97b; }
+
+  .task-name { font-size: 13px; }
+  .task-meta { font-size: 11px; color: var(--muted); }
+
+  .empty-state {
+    padding: 40px;
+    text-align: center;
+    color: var(--muted);
+  }
+
+  .empty-state .icon { font-size: 36px; margin-bottom: 12px; }
+  .empty-state p { font-size: 12px; line-height: 1.6; }
+
+  /* PLANNING GRID */
+  .planning-wrapper {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+
+  .planning-header {
+    display: grid;
+    grid-template-columns: 60px repeat(7, 1fr);
+    border-bottom: 2px solid var(--border);
+  }
+
+  .day-header {
+    padding: 10px;
+    text-align: center;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    border-left: 1px solid var(--border);
+  }
+
+  .day-header.weekend { color: var(--accent2); }
+
+  .planning-row {
+    display: grid;
+    grid-template-columns: 60px repeat(7, 1fr);
+    border-bottom: 1px solid var(--border);
+    min-height: 50px;
+  }
+
+  .planning-row:last-child { border-bottom: none; }
+
+  .time-label {
+    padding: 8px 6px;
+    text-align: center;
+    font-size: 10px;
+    color: var(--muted);
+    border-right: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .planning-cell {
+    border-left: 1px solid var(--border);
+    padding: 4px;
+    min-height: 50px;
+    position: relative;
+  }
+
+  .planning-block {
+    border-radius: 6px;
+    padding: 5px 7px;
+    font-size: 10px;
+    line-height: 1.3;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    cursor: pointer;
+    transition: opacity 0.2s;
+    position: relative;
+  }
+
+  .planning-block:hover { opacity: 0.85; }
+
+  .planning-block .block-mat {
+    font-weight: 700;
+    font-size: 10px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .planning-block .block-task {
+    font-size: 9px;
+    opacity: 0.85;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+
+  .planning-block .block-dur {
+    font-size: 9px;
+    opacity: 0.7;
+    margin-top: auto;
+  }
+
+  .break-block {
+    background: rgba(107,107,128,0.15);
+    border: 1px dashed var(--border);
+    color: var(--muted);
+    border-radius: 6px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-style: italic;
+  }
+
+  /* TIPS */
+  .tips-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .tip-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px;
+    transition: border-color 0.2s;
+  }
+
+  .tip-card:hover { border-color: var(--accent); }
+
+  .tip-icon {
+    font-size: 22px;
+    margin-bottom: 10px;
+  }
+
+  .tip-title {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    margin-bottom: 8px;
+    color: var(--text);
+  }
+
+  .tip-body {
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
+  /* COEFFICIENTS BAR */
+  .coef-bar {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+
+  .coef-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+
+  .coef-row:last-child { margin-bottom: 0; }
+
+  .coef-name {
+    width: 90px;
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .coef-track {
+    flex: 1;
+    height: 6px;
+    background: var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .coef-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 1s ease;
+  }
+
+  .coef-val {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 12px;
+    width: 24px;
+    text-align: right;
+  }
+
+  /* AI SECTION */
+  .ai-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+
+  .ai-response {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+    margin-top: 16px;
+    font-size: 13px;
+    line-height: 1.8;
+    color: var(--text);
+    display: none;
+  }
+
+  .ai-response.visible { display: block; animation: fadeIn 0.4s ease; }
+
+  .thinking {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 16px;
+    color: var(--muted);
+    font-size: 12px;
+  }
+
+  .dot-loader span {
+    display: inline-block;
+    width: 6px; height: 6px;
+    background: var(--accent);
+    border-radius: 50%;
+    animation: bounce 1.2s infinite;
+    margin: 0 2px;
+  }
+
+  .dot-loader span:nth-child(2) { animation-delay: 0.2s; }
+  .dot-loader span:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes bounce {
+    0%, 80%, 100% { transform: scale(0.7); opacity: 0.5; }
+    40% { transform: scale(1); opacity: 1; }
+  }
+
+  /* LEGEND */
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .legend-dot {
+    width: 10px; height: 10px;
+    border-radius: 3px;
+  }
+
+  /* PROGRESS */
+  .progress-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+
+  .progress-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 16px;
+  }
+
+  .progress-bar-wrap {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+
+  .progress-bar-label {
+    width: 80px;
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .progress-track {
+    flex: 1;
+    height: 8px;
+    background: var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.8s ease;
+  }
+
+  .progress-pct {
+    font-size: 11px;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    width: 36px;
+    text-align: right;
+  }
+
+  /* TIMER POMODORO */
+  .pomodoro-widget {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    text-align: center;
+  }
+
+  .timer-display {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 52px;
+    letter-spacing: -2px;
+    color: var(--accent);
+    margin: 16px 0;
+  }
+
+  .timer-status {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    margin-bottom: 20px;
+  }
+
+  .timer-buttons { display: flex; gap: 10px; justify-content: center; }
+
+  .btn-timer {
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--text);
+    transition: all 0.2s;
+  }
+
+  .btn-timer:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-timer.active-btn { background: var(--accent); border-color: var(--accent); color: white; }
+
+  .cycle-indicator {
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+    margin-top: 16px;
+  }
+
+  .cycle-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--border);
+    transition: background 0.3s;
+  }
+
+  .cycle-dot.done { background: var(--accent); }
+
+  .notification-banner {
+    background: linear-gradient(135deg, rgba(108,99,255,0.15), rgba(255,101,132,0.15));
+    border: 1px solid var(--accent);
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 12px;
+    margin-bottom: 16px;
+    display: none;
+    animation: fadeIn 0.3s ease;
+  }
+
+  .notification-banner.show { display: block; }
+
+  /* RESPONSIVE */
+  @media (max-width: 768px) {
+    .input-grid { grid-template-columns: 1fr 1fr; }
+    .tips-grid { grid-template-columns: 1fr; }
+    .header-stats { display: none; }
+    .planning-header, .planning-row { grid-template-columns: 40px repeat(7, 1fr); }
+  }
+
+  .checkbox {
+    width: 16px; height: 16px;
+    cursor: pointer;
+    accent-color: var(--accent);
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- HEADER -->
+  <header>
+    <div class="logo">
+      <div class="logo-icon">M∞</div>
+      <div class="logo-text">
+        <h1>MPSI Planner</h1>
+        <p>Organisateur intelligent de semaine</p>
+      </div>
+    </div>
+    <div class="header-stats">
+      <div class="stat-pill">
+        <span class="val" id="stat-tasks">0</span>
+        <span class="lbl">Tâches</span>
+      </div>
+      <div class="stat-pill">
+        <span class="val" id="stat-hours">0h</span>
+        <span class="lbl">Planifiées</span>
+      </div>
+      <div class="stat-pill">
+        <span class="val" id="stat-done">0%</span>
+        <span class="lbl">Complétées</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('tasks')">📋 Tâches</button>
+    <button class="tab" onclick="switchTab('planning')">📅 Planning</button>
+    <button class="tab" onclick="switchTab('pomodoro')">⏱ Pomodoro</button>
+    <button class="tab" onclick="switchTab('methodes')">📚 Méthodes</button>
+  </div>
+
+  <!-- ==================== TAB: TÂCHES ==================== -->
+  <div class="tab-panel active" id="panel-tasks">
+    
+    <div class="section-title">Ajouter une tâche</div>
+
+    <div class="input-grid">
+      <div class="field">
+        <label>Description de la tâche</label>
+        <input type="text" id="task-name" placeholder="ex: Exercices chapitre 3 – Suites" />
+      </div>
+      <div class="field">
+        <label>Matière</label>
+        <select id="task-mat">
+          <option value="maths">📐 Mathématiques</option>
+          <option value="physique">⚗️ Physique</option>
+          <option value="chimie">🧪 Chimie</option>
+          <option value="si">⚙️ Sciences Ing.</option>
+          <option value="info">💻 Informatique</option>
+          <option value="francais">📖 Français/Philo</option>
+          <option value="anglais">🇬🇧 Anglais/LV</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Durée estimée</label>
+        <select id="task-dur">
+          <option value="0.5">30 min</option>
+          <option value="0.75">45 min</option>
+          <option value="1" selected>1h</option>
+          <option value="1.5">1h30</option>
+          <option value="2">2h</option>
+          <option value="3">3h</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Priorité</label>
+        <select id="task-prio">
+          <option value="haute">🔴 Haute</option>
+          <option value="moyenne" selected>🟠 Moyenne</option>
+          <option value="basse">🟢 Basse</option>
+        </select>
+      </div>
+      <button class="btn btn-primary" onclick="addTask()" style="align-self:end;">+ Ajouter</button>
+    </div>
+
+    <div id="notification" class="notification-banner"></div>
+
+    <div class="section-title">Mes tâches de la semaine</div>
+
+    <div class="tasks-container" id="tasks-list">
+      <div class="empty-state">
+        <div class="icon">✏️</div>
+        <p>Ajoute tes tâches de la semaine ci-dessus.<br>Le planificateur les organisera selon les méthodes MPSI.</p>
+      </div>
+    </div>
+
+    <button class="btn btn-generate" onclick="generatePlanning()">
+      ✨ Générer le planning intelligent de la semaine
+    </button>
+  </div>
+
+  <!-- ==================== TAB: PLANNING ==================== -->
+  <div class="tab-panel" id="panel-planning">
+    <div class="section-title">Vue hebdomadaire</div>
+
+    <div class="legend" id="legend">
+      <div class="legend-item"><div class="legend-dot" style="background:#6c63ff"></div>Mathématiques</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#43e97b"></div>Physique</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#f7971e"></div>Chimie</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#38b2f7"></div>Informatique</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#ff6584"></div>Français</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#f7c948"></div>Anglais/LV</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#a78bfa"></div>Sciences Ing.</div>
+    </div>
+
+    <div class="planning-wrapper" id="planning-grid">
+      <div style="padding:48px; text-align:center; color:var(--muted);">
+        <div style="font-size:32px; margin-bottom:12px">📅</div>
+        <p style="font-size:12px;">Le planning apparaîtra ici après génération.<br>Va dans "Tâches" et clique sur <strong>"Générer le planning"</strong>.</p>
+      </div>
+    </div>
+
+    <div class="progress-section" id="progress-section" style="display:none">
+      <div class="progress-title">Charge de travail par matière</div>
+      <div id="progress-bars"></div>
+    </div>
+  </div>
+
+  <!-- ==================== TAB: POMODORO ==================== -->
+  <div class="tab-panel" id="panel-pomodoro">
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+      <div class="pomodoro-widget">
+        <div class="section-title" style="justify-content:center; margin-bottom:8px;">Technique Pomodoro</div>
+        <p style="font-size:11px; color:var(--muted); text-align:center;">Blocs de 45 min — méthode conseillée en prépa</p>
+        
+        <div class="timer-display" id="timer-display">45:00</div>
+        <div class="timer-status" id="timer-status">🎯 Prêt à travailler</div>
+
+        <div style="margin-bottom:16px;">
+          <label style="font-size:10px; color:var(--muted); display:block; margin-bottom:6px; text-transform:uppercase; letter-spacing:.05em;">Matière en cours</label>
+          <select id="current-mat" style="width:100%;">
+            <option value="maths">📐 Mathématiques</option>
+            <option value="physique">⚗️ Physique</option>
+            <option value="chimie">🧪 Chimie</option>
+            <option value="si">⚙️ Sciences Ing.</option>
+            <option value="info">💻 Informatique</option>
+            <option value="francais">📖 Français/Philo</option>
+            <option value="anglais">🇬🇧 Anglais/LV</option>
+          </select>
+        </div>
+
+        <div class="timer-buttons">
+          <button class="btn-timer active-btn" id="mode-45" onclick="setMode(45,'Travail')">45 min</button>
+          <button class="btn-timer" id="mode-25" onclick="setMode(25,'Travail')">25 min</button>
+          <button class="btn-timer" id="mode-break" onclick="setMode(10,'Pause')">Pause 10'</button>
+        </div>
+
+        <div style="margin-top:16px; display:flex; gap:8px; justify-content:center;">
+          <button class="btn btn-primary" onclick="startTimer()" id="btn-start">▶ Démarrer</button>
+          <button class="btn" style="background:var(--surface2); border:1px solid var(--border);" onclick="resetTimer()">↺ Reset</button>
+        </div>
+
+        <div class="cycle-indicator" id="cycles">
+          <div class="cycle-dot"></div>
+          <div class="cycle-dot"></div>
+          <div class="cycle-dot"></div>
+          <div class="cycle-dot"></div>
+        </div>
+        <p style="font-size:10px; color:var(--muted); margin-top:6px;">4 blocs = grande pause (30 min)</p>
+      </div>
+
+      <div>
+        <div class="tip-card" style="margin-bottom:12px;">
+          <div class="tip-icon">⚡</div>
+          <div class="tip-title">La méthode des blocs 45 min</div>
+          <div class="tip-body">En prépa, les profs recommandent de travailler par blocs de 45 min sur une matière. Ensuite, change de matière. Évite de rester 4h sur les maths même si tu as un DM urgent — ton cerveau sera plus efficace ainsi.</div>
+        </div>
+        <div class="tip-card">
+          <div class="tip-icon">😴</div>
+          <div class="tip-title">Le sommeil, ton arme secrète</div>
+          <div class="tip-body">N'ampute jamais ton temps de sommeil pour finir un exercice. Un étudiant reposé est 2-3x plus efficace. Vise 7h30-8h minimum. La prépa est une course d'endurance, pas un sprint.</div>
+        </div>
+        <div style="background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:16px; margin-top:12px;">
+          <div style="font-family:'Syne',sans-serif; font-weight:700; font-size:13px; margin-bottom:12px;">Sessions aujourd'hui</div>
+          <div id="sessions-log" style="font-size:11px; color:var(--muted);">Aucune session commencée.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== TAB: MÉTHODES ==================== -->
+  <div class="tab-panel" id="panel-methodes">
+    
+    <div class="section-title">Coefficients MPSI — Concours</div>
+    <div class="coef-bar">
+      <div class="coef-row">
+        <span class="coef-name">Maths</span>
+        <div class="coef-track"><div class="coef-fill" style="width:100%; background:#6c63ff;"></div></div>
+        <span class="coef-val" style="color:#6c63ff;">8</span>
+      </div>
+      <div class="coef-row">
+        <span class="coef-name">Physique</span>
+        <div class="coef-track"><div class="coef-fill" style="width:75%; background:#43e97b;"></div></div>
+        <span class="coef-val" style="color:#43e97b;">6</span>
+      </div>
+      <div class="coef-row">
+        <span class="coef-name">Français</span>
+        <div class="coef-track"><div class="coef-fill" style="width:75%; background:#ff6584;"></div></div>
+        <span class="coef-val" style="color:#ff6584;">6</span>
+      </div>
+      <div class="coef-row">
+        <span class="coef-name">Sc. Ing.</span>
+        <div class="coef-track"><div class="coef-fill" style="width:37%; background:#a78bfa;"></div></div>
+        <span class="coef-val" style="color:#a78bfa;">3</span>
+      </div>
+      <div class="coef-row">
+        <span class="coef-name">Chimie</span>
+        <div class="coef-track"><div class="coef-fill" style="width:25%; background:#f7971e;"></div></div>
+        <span class="coef-val" style="color:#f7971e;">2</span>
+      </div>
+      <div class="coef-row">
+        <span class="coef-name">Anglais</span>
+        <div class="coef-track"><div class="coef-fill" style="width:25%; background:#f7c948;"></div></div>
+        <span class="coef-val" style="color:#f7c948;">2</span>
+      </div>
+    </div>
+
+    <div class="section-title">Méthodologies éprouvées</div>
+    <div class="tips-grid">
+      <div class="tip-card">
+        <div class="tip-icon">📆</div>
+        <div class="tip-title">Planifier le dimanche</div>
+        <div class="tip-body">Consacre le dimanche matin à planifier ta semaine entière. Regarde tes khôlles, DS et DM à venir. Anticipe : prépare une khôlle dès que tu as ton programme, pas la veille.</div>
+      </div>
+      <div class="tip-card">
+        <div class="tip-icon">📌</div>
+        <div class="tip-title">Ficher le soir même</div>
+        <div class="tip-body">Fais tes fiches de cours le soir même — 1h à 1h30 par jour. C'est du temps investi maintenant qui te sauve lors des DS et colles. Les fiches doivent tenir en 1-2 pages max par chapitre.</div>
+      </div>
+      <div class="tip-card">
+        <div class="tip-icon">⚖️</div>
+        <div class="tip-title">Règle des 2,5x</div>
+        <div class="tip-body">N'accorde jamais plus de 2,5x la durée d'un DS pour le préparer. Si le DS dure 3h, prévois max 7h30 de révisions. Cela t'empêche de surcharger une seule matière.</div>
+      </div>
+      <div class="tip-card">
+        <div class="tip-icon">🔄</div>
+        <div class="tip-title">Alterner les matières</div>
+        <div class="tip-body">Maths (45 min) → Exercices (45 min) → Langue (45 min) → Philo (45 min). Alterner réduit la fatigue cognitive et améliore la mémorisation. Ne jamais travailler 4h d'affilée sur la même chose.</div>
+      </div>
+      <div class="tip-card">
+        <div class="tip-icon">🎯</div>
+        <div class="tip-title">Priorité aux coefficients</div>
+        <div class="tip-body">Répartis ton temps proportionnellement aux coefficients des concours. Les maths (coeff 8) méritent le double du temps de la chimie (coeff 2). Ne sacrifie pas les "petites" matières, mais sois stratégique.</div>
+      </div>
+      <div class="tip-card">
+        <div class="tip-icon">🏃</div>
+        <div class="tip-title">Préserver l'endurance</div>
+        <div class="tip-body">La prépa = course de fond sur 2 ans. Préserve au moins 1 soir off par semaine. Ménage-toi du sport et des pauses. Un samedi après-midi de détente n'est pas du temps perdu — c'est un investissement.</div>
+      </div>
+    </div>
+
+    <div class="section-title">Planning type — Répartition hebdomadaire</div>
+    <div class="ai-panel">
+      <p style="font-size:12px; color:var(--muted); line-height:1.7; margin-bottom:16px;">Répartition recommandée du travail personnel (~50h/semaine objectif long terme) basée sur les coefficients Centrale-Supélec :</p>
+      <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:10px;">
+        <div style="background:var(--surface2); border-radius:8px; padding:14px; border-left:3px solid #6c63ff;">
+          <div style="font-size:11px; color:var(--muted); margin-bottom:4px;">MATHÉMATIQUES</div>
+          <div style="font-family:'Syne',sans-serif; font-weight:700; font-size:18px; color:#6c63ff;">12–15h <span style="font-size:12px; font-weight:400; color:var(--muted);">/ semaine</span></div>
+        </div>
+        <div style="background:var(--surface2); border-radius:8px; padding:14px; border-left:3px solid #43e97b;">
+          <div style="font-size:11px; color:var(--muted); margin-bottom:4px;">PHYSIQUE</div>
+          <div style="font-family:'Syne',sans-serif; font-weight:700; font-size:18px; color:#43e97b;">8–10h <span style="font-size:12px; font-weight:400; color:var(--muted);">/ semaine</span></div>
+        </div>
+        <div style="background:var(--surface2); border-radius:8px; padding:14px; border-left:3px solid #ff6584;">
+          <div style="font-size:11px; color:var(--muted); margin-bottom:4px;">FRANÇAIS / PHILO</div>
+          <div style="font-family:'Syne',sans-serif; font-weight:700; font-size:18px; color:#ff6584;">4–6h <span style="font-size:12px; font-weight:400; color:var(--muted);">/ semaine</span></div>
+        </div>
+        <div style="background:var(--surface2); border-radius:8px; padding:14px; border-left:3px solid #f7971e;">
+          <div style="font-size:11px; color:var(--muted); margin-bottom:4px;">CHIMIE + SC. ING.</div>
+          <div style="font-family:'Syne',sans-serif; font-weight:700; font-size:18px; color:#f7971e;">4–6h <span style="font-size:12px; font-weight:400; color:var(--muted);">/ semaine</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ai-panel">
+      <div style="font-family:'Syne',sans-serif; font-weight:700; font-size:14px; margin-bottom:8px; display:flex; align-items:center; gap:8px;">
+        <span>🤖</span> Demander un conseil personnalisé à Claude
+      </div>
+      <p style="font-size:11px; color:var(--muted); margin-bottom:14px;">Pose une question sur ta méthode de travail ou ton organisation en prépa MPSI.</p>
+      <textarea id="ai-question" rows="3" placeholder="ex: J'ai un DS de physique vendredi et une khôlle de maths jeudi. Comment organiser mes révisions cette semaine ?" style="resize:vertical;"></textarea>
+      <button class="btn btn-generate" style="margin-top:10px;" onclick="askClaude()">🚀 Demander à Claude</button>
+      <div id="ai-response" class="ai-response"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ======================== STATE ========================
+let tasks = [];
+let timerInterval = null;
+let timerSeconds = 45 * 60;
+let timerRunning = false;
+let currentMode = '45';
+let cycleCount = 0;
+let sessions = [];
+
+const COLORS = {
+  maths: '#6c63ff',
+  physique: '#43e97b',
+  chimie: '#f7971e',
+  info: '#38b2f7',
+  francais: '#ff6584',
+  anglais: '#f7c948',
+  si: '#a78bfa'
+};
+
+const MAT_NAMES = {
+  maths: 'Mathématiques',
+  physique: 'Physique',
+  chimie: 'Chimie',
+  info: 'Informatique',
+  francais: 'Français/Philo',
+  anglais: 'Anglais/LV',
+  si: 'Sciences Ing.'
+};
+
+const MAT_ICONS = {
+  maths: '📐', physique: '⚗️', chimie: '🧪', info: '💻',
+  francais: '📖', anglais: '🇬🇧', si: '⚙️'
+};
+
+// Coefficient weights for planning priority
+const COEF_WEIGHT = { maths:8, physique:6, francais:6, si:3, chimie:2, anglais:2, info:2 };
+
+// ======================== TABS ========================
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+  event.target.classList.add('active');
+}
+
+// ======================== TASKS ========================
+function addTask() {
+  const name = document.getElementById('task-name').value.trim();
+  if (!name) { showNotif('❗ Écris une description pour la tâche.', '#ff4757'); return; }
+  
+  const task = {
+    id: Date.now(),
+    name,
+    mat: document.getElementById('task-mat').value,
+    dur: parseFloat(document.getElementById('task-dur').value),
+    prio: document.getElementById('task-prio').value,
+    done: false
+  };
+
+  tasks.push(task);
+  document.getElementById('task-name').value = '';
+  renderTasks();
+  updateStats();
+  showNotif('✅ Tâche ajoutée !', '#43e97b');
+}
+
+function removeTask(id) {
+  tasks = tasks.filter(t => t.id !== id);
+  renderTasks();
+  updateStats();
+}
+
+function toggleTask(id) {
+  const t = tasks.find(t => t.id === id);
+  if (t) { t.done = !t.done; renderTasks(); updateStats(); }
+}
+
+function renderTasks() {
+  const el = document.getElementById('tasks-list');
+  if (!tasks.length) {
+    el.innerHTML = `<div class="empty-state"><div class="icon">✏️</div><p>Ajoute tes tâches de la semaine ci-dessus.<br>Le planificateur les organisera selon les méthodes MPSI.</p></div>`;
+    return;
+  }
+
+  // Sort: undone first, then by priority
+  const prioOrder = { haute:0, moyenne:1, basse:2 };
+  const sorted = [...tasks].sort((a,b) => {
+    if (a.done !== b.done) return a.done ? 1 : -1;
+    return prioOrder[a.prio] - prioOrder[b.prio];
+  });
+
+  el.innerHTML = sorted.map(t => `
+    <div class="task-row ${t.done ? 'done' : ''}">
+      <input type="checkbox" class="checkbox" ${t.done?'checked':''} onchange="toggleTask(${t.id})">
+      <div class="task-name">${t.name}</div>
+      <div>
+        <span class="matiere-badge" style="background:${COLORS[t.mat]}22; color:${COLORS[t.mat]};">
+          ${MAT_ICONS[t.mat]} ${MAT_NAMES[t.mat]}
+        </span>
+      </div>
+      <div class="task-meta">${t.dur >= 1 ? t.dur + 'h' : (t.dur*60)+'min'}</div>
+      <div style="display:flex;align-items:center;gap:5px;">
+        <div class="priority-dot p-${t.prio}"></div>
+        <span class="task-meta" style="text-transform:capitalize;">${t.prio}</span>
+      </div>
+      <button class="btn btn-danger" onclick="removeTask(${t.id})">✕</button>
+    </div>
+  `).join('');
+}
+
+function updateStats() {
+  const total = tasks.length;
+  const done = tasks.filter(t => t.done).length;
+  const hours = tasks.reduce((s,t) => s + t.dur, 0);
+  document.getElementById('stat-tasks').textContent = total;
+  document.getElementById('stat-hours').textContent = hours + 'h';
+  document.getElementById('stat-done').textContent = total ? Math.round(done/total*100)+'%' : '0%';
+}
+
+function showNotif(msg, color) {
+  const el = document.getElementById('notification');
+  el.textContent = msg;
+  el.style.borderColor = color;
+  el.style.color = color;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+// ======================== PLANNING GENERATOR ========================
+function generatePlanning() {
+  if (!tasks.length) { showNotif('❗ Ajoute au moins une tâche avant de générer le planning.', '#ff4757'); return; }
+
+  // Sort tasks by priority and coefficient
+  const prioOrder = { haute:0, moyenne:1, basse:2 };
+  const sorted = [...tasks].filter(t => !t.done).sort((a,b) => {
+    const pa = prioOrder[a.prio] * 1 - (COEF_WEIGHT[a.mat]||1)*0.1;
+    const pb = prioOrder[b.prio] * 1 - (COEF_WEIGHT[b.mat]||1)*0.1;
+    return pa - pb;
+  });
+
+  const days = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+  const slots = [
+    {label:'7h-8h', key:'7'},
+    {label:'8h-10h', key:'8'},
+    {label:'10h-12h', key:'10'},
+    {label:'12h-14h', key:'12'},
+    {label:'14h-16h', key:'14'},
+    {label:'16h-18h', key:'16'},
+    {label:'18h-20h', key:'18'},
+    {label:'20h-22h', key:'20'},
+  ];
+
+  // Build schedule: place tasks respecting MPSI rules
+  // Rules: max 3h consecutive same subject, alternate subjects, preserve breaks
+  const schedule = {}; // schedule[day][slot] = {task, type}
+  days.forEach(d => { schedule[d] = {}; });
+
+  // Fixed breaks
+  days.forEach(d => {
+    schedule[d]['7'] = { type:'break', label: d === 'Sam' ? '🎓 DS' : '🌅 Réveil / Petit-déj' };
+    schedule[d]['12'] = { type:'break', label: '🍽️ Déjeuner + Pause' };
+    if (d === 'Dim') schedule[d]['20'] = { type:'break', label: '🌙 Soirée libre' };
+  });
+
+  // Assign tasks intelligently
+  let taskQueue = [...sorted];
+  const workSlots = ['8','10','14','16','18','20'];
+  const dayOrder = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
+
+  // Track last mat per day to alternate
+  const lastMat = {};
+
+  for (const day of dayOrder) {
+    lastMat[day] = null;
+    for (const slot of workSlots) {
+      if (!taskQueue.length) break;
+      if (schedule[day][slot]) continue; // already occupied
+
+      // Weekend evening = rest
+      if ((day === 'Sam' || day === 'Dim') && slot === '20') {
+        schedule[day][slot] = { type:'break', label:'🎉 Temps libre mérité' };
+        continue;
+      }
+
+      // Try to pick a task different from last mat (alternation)
+      let taskIdx = 0;
+      if (lastMat[day] && taskQueue.length > 1) {
+        const altIdx = taskQueue.findIndex(t => t.mat !== lastMat[day]);
+        if (altIdx !== -1) taskIdx = altIdx;
+      }
+
+      const t = taskQueue[taskIdx];
+      schedule[day][slot] = { type:'task', task:t };
+      lastMat[day] = t.mat;
+      taskQueue.splice(taskIdx, 1);
+    }
+  }
+
+  // Remaining tasks → overflow on existing light days
+  if (taskQueue.length) {
+    for (const day of dayOrder) {
+      for (const slot of workSlots) {
+        if (!taskQueue.length) break;
+        if (!schedule[day][slot]) {
+          schedule[day][slot] = { type:'task', task: taskQueue.shift() };
+        }
+      }
+    }
+  }
+
+  // Render
+  let html = `
+    <div class="planning-header">
+      <div class="time-label" style="font-size:10px;color:var(--muted);border-right:1px solid var(--border);display:flex;align-items:center;justify-content:center;">⏰</div>
+      ${days.map((d,i) => `<div class="day-header ${i>=5?'weekend':''}">${d}</div>`).join('')}
+    </div>
+  `;
+
+  slots.forEach(slot => {
+    html += `<div class="planning-row">
+      <div class="time-label">${slot.label}</div>
+      ${days.map(day => {
+        const cell = schedule[day][slot.key];
+        if (!cell) {
+          return `<div class="planning-cell"></div>`;
+        }
+        if (cell.type === 'break') {
+          return `<div class="planning-cell"><div class="break-block">${cell.label}</div></div>`;
+        }
+        const t = cell.task;
+        const col = COLORS[t.mat];
+        return `<div class="planning-cell">
+          <div class="planning-block" style="background:${col}22; border-left:3px solid ${col}; color:${col};">
+            <div class="block-mat">${MAT_ICONS[t.mat]} ${MAT_NAMES[t.mat]}</div>
+            <div class="block-task" style="color:var(--text);">${t.name}</div>
+            <div class="block-dur">${t.dur >= 1 ? t.dur+'h' : (t.dur*60)+'min'} · ${t.prio}</div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
+  });
+
+  document.getElementById('planning-grid').innerHTML = html;
+
+  // Progress bars
+  const matHours = {};
+  tasks.forEach(t => { matHours[t.mat] = (matHours[t.mat]||0) + t.dur; });
+  const maxH = Math.max(...Object.values(matHours), 1);
+  
+  let pbHtml = '';
+  Object.entries(matHours).sort((a,b)=>b[1]-a[1]).forEach(([mat, h]) => {
+    pbHtml += `
+      <div class="progress-bar-wrap">
+        <div class="progress-bar-label">${MAT_ICONS[mat]} ${MAT_NAMES[mat].split('/')[0]}</div>
+        <div class="progress-track">
+          <div class="progress-fill" style="width:${Math.round(h/maxH*100)}%; background:${COLORS[mat]};"></div>
+        </div>
+        <div class="progress-pct" style="color:${COLORS[mat]};">${h}h</div>
+      </div>`;
+  });
+  document.getElementById('progress-bars').innerHTML = pbHtml;
+  document.getElementById('progress-section').style.display = 'block';
+
+  // Switch to planning tab
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-planning').classList.add('active');
+  document.querySelectorAll('.tab')[1].classList.add('active');
+
+  showNotif('🗓️ Planning généré avec succès !', '#43e97b');
+}
+
+// ======================== POMODORO ========================
+function setMode(min, label) {
+  timerSeconds = min * 60;
+  currentMode = String(min);
+  timerRunning = false;
+  clearInterval(timerInterval);
+  document.getElementById('timer-display').textContent = formatTime(timerSeconds);
+  document.getElementById('timer-status').textContent = label === 'Pause' ? '☕ Pause en cours' : '🎯 Prêt à travailler';
+  document.querySelectorAll('.btn-timer').forEach(b => b.classList.remove('active-btn'));
+  if (min === 45) document.getElementById('mode-45').classList.add('active-btn');
+  else if (min === 25) document.getElementById('mode-25').classList.add('active-btn');
+  else document.getElementById('mode-break').classList.add('active-btn');
+  document.getElementById('btn-start').textContent = '▶ Démarrer';
+}
+
+function formatTime(s) {
+  const m = Math.floor(s/60);
+  const sec = s % 60;
+  return String(m).padStart(2,'0') + ':' + String(sec).padStart(2,'0');
+}
+
+function startTimer() {
+  if (timerRunning) {
+    clearInterval(timerInterval);
+    timerRunning = false;
+    document.getElementById('btn-start').textContent = '▶ Reprendre';
+    document.getElementById('timer-status').textContent = '⏸ En pause';
+    return;
+  }
+  timerRunning = true;
+  document.getElementById('btn-start').textContent = '⏸ Pause';
+  const mat = document.getElementById('current-mat').value;
+  document.getElementById('timer-status').textContent = '⚡ Concentration — ' + MAT_NAMES[mat];
+
+  timerInterval = setInterval(() => {
+    timerSeconds--;
+    document.getElementById('timer-display').textContent = formatTime(timerSeconds);
+    if (timerSeconds <= 0) {
+      clearInterval(timerInterval);
+      timerRunning = false;
+      cycleCount = Math.min(cycleCount + 1, 4);
+      updateCycles();
+      logSession(mat);
+      document.getElementById('timer-status').textContent = '🎉 Session terminée !';
+      document.getElementById('btn-start').textContent = '▶ Démarrer';
+      if (cycleCount >= 4) {
+        cycleCount = 0;
+        updateCycles();
+        alert('🏆 4 blocs terminés ! Prends une grande pause de 30 minutes — tu le mérites !');
+      } else {
+        alert('✅ Session terminée ! Prends une pause de 10 min avant le prochain bloc.');
+      }
+    }
+  }, 1000);
+}
+
+function resetTimer() {
+  clearInterval(timerInterval);
+  timerRunning = false;
+  const min = currentMode === '45' ? 45 : currentMode === '25' ? 25 : 10;
+  timerSeconds = min * 60;
+  document.getElementById('timer-display').textContent = formatTime(timerSeconds);
+  document.getElementById('timer-status').textContent = '🎯 Prêt à travailler';
+  document.getElementById('btn-start').textContent = '▶ Démarrer';
+}
+
+function updateCycles() {
+  const dots = document.querySelectorAll('.cycle-dot');
+  dots.forEach((d, i) => {
+    d.classList.toggle('done', i < cycleCount);
+  });
+}
+
+function logSession(mat) {
+  const now = new Date();
+  sessions.push({ mat, time: now.toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'}) });
+  const el = document.getElementById('sessions-log');
+  el.innerHTML = sessions.slice(-5).reverse().map(s =>
+    `<div style="padding:6px 0; border-bottom:1px solid var(--border); display:flex; justify-content:space-between;">
+      <span>${MAT_ICONS[s.mat]} ${MAT_NAMES[s.mat]}</span>
+      <span style="color:var(--muted)">${s.time}</span>
+    </div>`
+  ).join('');
+}
+
+// ======================== CLAUDE AI ========================
+async function askClaude() {
+  const q = document.getElementById('ai-question').value.trim();
+  if (!q) return;
+  
+  const responseEl = document.getElementById('ai-response');
+  responseEl.className = 'ai-response visible';
+  responseEl.innerHTML = `<div class="thinking"><div class="dot-loader"><span></span><span></span><span></span></div> Claude réfléchit...</div>`;
+
+  const context = tasks.length ? `\n\nTâches actuelles de l'étudiant: ${tasks.map(t => `${MAT_NAMES[t.mat]}: ${t.name} (${t.dur}h, priorité ${t.prio})`).join('; ')}` : '';
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system: `Tu es un coach expert en organisation pour étudiants en prépa MPSI (Mathématiques, Physique, Sciences de l'Ingénieur). Tu connais parfaitement les méthodes de travail efficaces en CPGE : technique des blocs de 45 min, importance du fichage quotidien, répartition par coefficients, règle des 2.5x pour les DS, alternance des matières, préservation du sommeil et des pauses. Tu donnes des conseils concrets, motivants et adaptés à la réalité de la prépa. Réponds en français, de façon structurée mais conversationnelle. Sois précis et actionnable. Utilise des emojis pour rendre la réponse plus lisible.`,
+        messages: [{ role: 'user', content: q + context }]
+      })
+    });
+
+    const data = await res.json();
+    const text = data.content?.map(b => b.text || '').join('') || 'Erreur de réponse.';
+    responseEl.innerHTML = text.replace(/\n/g, '<br>');
+  } catch (e) {
+    responseEl.innerHTML = '❌ Erreur de connexion. Vérifie ta connexion internet.';
+  }
+}
+
+// Init
+renderTasks();
+updateStats();
+</script>
+</body>
+</html>
